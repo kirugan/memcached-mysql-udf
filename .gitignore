@@ -1,0 +1,6 @@
+.vagrant/
+.idea/
+stubs/
+*.out
+*.so
+*.o
