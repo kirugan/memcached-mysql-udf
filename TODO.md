@@ -1,0 +1,4 @@
+- Add tests to reinstall UDF
+- Add example of usage with triggers
+- Add several other functions
+- Write about cons and pros of this workaround

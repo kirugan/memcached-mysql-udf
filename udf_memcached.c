@@ -1,29 +1,6 @@
-// #include <libmemcached/memcached.h>
-
-#ifdef STANDARD
-/* STANDARD is defined, don't use any mysql functions */
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#ifdef __WIN__
-typedef unsigned __int64 ulonglong;	/* Microsofts 64 bit types */
-typedef __int64 longlong;
-#else
-typedef unsigned long long ulonglong;
-typedef long long longlong;
-#endif /*__WIN__*/
-#else
+#include <libmemcached/memcached.h>
 #include <my_global.h>
 #include <my_sys.h>
-#if defined(MYSQL_SERVER)
-#include <m_string.h>		/* To get strmov() */
-#else
-/* when compiled as standalone */
-#include <string.h>
-#define strmov(a,b) stpcpy(a,b)
-#define bzero(a,b) memset(a,0,b)
-#endif
-#endif
 #include <mysql.h>
 #include <ctype.h>
 
@@ -43,8 +20,11 @@ my_bool mc_set_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
     return 1;
   }
 
-  initid->ptr= (char*)"Wrong length";
-  initid->max_length = 100;
+    char* msg = malloc(sizeof(char) * 100);
+    sprintf(msg, "Call at %ld", time(NULL));
+  initid->ptr= msg;
+  initid->max_length = strlen(msg);
+
   return 0;
 }
 
@@ -52,7 +32,26 @@ char * mc_set(UDF_INIT *initid, UDF_ARGS *args __attribute__((unused)),
                 char *result, unsigned long *length,
                 char *is_null, char *error __attribute__((unused)))
 {
-  strmov(result, initid->ptr);
+    char* msg = malloc(sizeof(char) * 100);
+    char* key = malloc(sizeof(char) * (args->lengths[0] + 1));
+            strncpy(key, args->args[0], args->lengths[0]);
+            key[args->lengths[0]] = '\0';
+
+
+
+    char* config = "--SERVER=127.0.0.1:11211";
+    memcached_st* mc = memcached(config, strlen(config));
+    memcached_return_t mc_result = memcached_set(mc, args->args[0], args->lengths[0],
+                                                     args->args[1], args->lengths[1],
+                                                     time(NULL) + 1000,
+                                                     0);
+
+    memcached_free(mc);
+
+
+    sprintf(msg, "test");
+
+  strmov(result, msg);
   *length= (uint) strlen(result);
   *is_null= 0;
   return result;
